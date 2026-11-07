@@ -377,6 +377,23 @@ async function handlePost(ctx) {
 
   if (body.action === 'save') {
     const p = publicPayload(body.db || {});
+    /* 防止另一台设备 / 过期草稿把整馆数据整包覆盖：
+       一次发布若把应用数砍掉一半以上且减少 >= 20 个，直接拒绝。
+       正常的分批删除不受影响；确需整批清理可分批进行。 */
+    let oldCount = 0;
+    try {
+      const oldM = JSON.parse(await readRepoFile('manifest.json', env));
+      oldCount = Array.isArray(oldM.apps) ? oldM.apps.length : 0;
+    } catch (e) { /* 读不到旧清单时不做猜测，放行 */ }
+    const newCount = Array.isArray(p.apps) ? p.apps.length : 0;
+    if (oldCount >= 20 && newCount < oldCount * 0.5 && oldCount - newCount >= 20) {
+      return json({
+        error: '已拦截一次疑似旧草稿覆盖：线上现有 ' + oldCount + ' 个应用，'
+             + '本次发布只剩 ' + newCount + ' 个。请先退出登录再重新登录'
+             + '（或点「放弃更改」）同步云端最新馆藏，确认后再发布；'
+             + '确实要删除请分批操作。'
+      }, 409);
+    }
     const images = extractImages(p);
     const orphans = await orphanedImagePaths(p, env);
     const removals = orphans.map(path => ({ path, remove: true }));
