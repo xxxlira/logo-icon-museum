@@ -273,6 +273,35 @@ async function buildIndexHTML(p, env) {
   return html.replace(SNAP_RE, (all, open, close) => open + snapshot + close);
 }
 
+/* 清单里仍被引用到的站内图片路径（icons / thumbs / related） */
+function referencedImagePaths(m) {
+  const set = new Set();
+  const SITE_IMG = /^(\.\/)?(icons|thumbs|related)\//;
+  for (const a of (m && Array.isArray(m.apps) ? m.apps : [])) {
+    for (const ic of (a.icons || [])) {
+      for (const f of ['url', 'hdUrl']) {
+        const v = ic[f];
+        if (typeof v === 'string' && SITE_IMG.test(v)) set.add(v.replace(/^\.\//, ''));
+      }
+    }
+    for (const ri of ((a.app && a.app.relatedImages) || [])) {
+      const v = ri && ri.url;
+      if (typeof v === 'string' && SITE_IMG.test(v)) set.add(v.replace(/^\.\//, ''));
+    }
+  }
+  return set;
+}
+
+/* 批量删除应用后，找出新清单已不再引用、但仓库里还存在的图片文件。
+   只做「旧引用 - 新引用」差集，因此不会误删仍被其它应用共用的图片。 */
+async function orphanedImagePaths(p, env) {
+  let old;
+  try { old = JSON.parse(await readRepoFile('manifest.json', env)); }
+  catch (e) { return []; }   /* 首次发布 / 旧清单读不到时不做猜测 */
+  const before = referencedImagePaths(old), after = referencedImagePaths(p);
+  return [...before].filter(x => !after.has(x)).slice(0, 500);
+}
+
 /* 用 Git Data API 一次性提交多个文件，避免产生多次无谓的 Pages 构建 */
 async function atomicCommit(items, env, message) {
   const ref = await gh('/repos/' + REPO + '/git/ref/heads/' + BRANCH, env);
@@ -281,6 +310,8 @@ async function atomicCommit(items, env, message) {
   const entries = [];
   // 串行创建 blob，避免并发触发 GitHub 的二级限流
   for (const it of items) {
+    /* sha:null 是 GitHub Git Trees API 的删除语义，用于回收已删应用的孤儿图片 */
+    if (it.remove) { entries.push({ path: it.path, mode: '100644', type: 'blob', sha: null }); continue; }
     const blob = await gh('/repos/' + REPO + '/git/blobs', env, {
       method: 'POST',
       body: JSON.stringify({ content: it.base64, encoding: 'base64' }),
@@ -347,14 +378,16 @@ async function handlePost(ctx) {
   if (body.action === 'save') {
     const p = publicPayload(body.db || {});
     const images = extractImages(p);
-    const items = images.concat([
+    const orphans = await orphanedImagePaths(p, env);
+    const removals = orphans.map(path => ({ path, remove: true }));
+    const items = images.concat(removals).concat([
       { path: 'manifest.json', base64: utf8ToB64(JSON.stringify(buildManifest(p))) },
       { path: 'index.html', base64: utf8ToB64(await buildIndexHTML(p, env)) },
     ]);
     /* 纯文字改动不需要重建静态资源：用 Cloudflare 官方的 [CI Skip] 提交信息前缀
        跳过 Pages 构建；内容本身通过 /api/cms?action=manifest 即时生效。
-       只有本次含新图片时才正常构建，把文件铺到 CDN。 */
-    const skippedBuild = images.length === 0;
+       含新图片或删了应用（要回收 CDN 上的旧图）时才正常构建。 */
+    const skippedBuild = images.length === 0 && removals.length === 0;
     const message = (skippedBuild ? '[CI Skip] ' : '')
       + '站内编辑：' + p.apps.length + ' 个应用 · ' + new Date().toISOString();
     const sha = await atomicCommit(items, env, message);
