@@ -205,6 +205,7 @@ function publicPayload(db) {
   if (!Array.isArray(p.apps)) throw new Error('数据格式不正确：缺少 apps');
   if (!Array.isArray(p.designers)) p.designers = [];
   if (!Array.isArray(p.categories)) p.categories = [];
+  if (!Array.isArray(p.types)) p.types = [];
   return p;
 }
 
@@ -257,6 +258,7 @@ function buildManifest(p) {
     categories: p.categories,
   };
   if (p.styles) m.styles = p.styles;
+  if (p.types) m.types = p.types;
   if (p.about) m.about = p.about;
   if (p.settings) m.settings = p.settings;
   return m;
@@ -267,7 +269,7 @@ async function buildIndexHTML(p, env) {
   if (!SNAP_RE.test(html)) throw new Error('index.html 里找不到 #site-db 快照节点');
   const snapshot = JSON.stringify({
     generatedAt: p.generatedAt, apps: p.apps, designers: p.designers,
-    categories: p.categories, styles: p.styles, about: p.about,
+    categories: p.categories, styles: p.styles, types: p.types, about: p.about,
     settings: p.settings, version: 5,
   }).replace(/</g, '\\u003c');
   return html.replace(SNAP_RE, (all, open, close) => open + snapshot + close);
