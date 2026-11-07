@@ -130,6 +130,21 @@ header.nav{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);bac
 .variant{border:2px solid transparent;border-radius:22.37%;overflow:hidden;width:58px;height:58px;flex-shrink:0;background:var(--secondary);padding:0}
 .variant.active{border-color:var(--accent)}
 .variant img{width:100%;height:100%;object-fit:cover}
+/* 相关图片：便当式排布。固定高度 + 按原图宽高比自动定宽，多图自由换行 */
+.related-imgs{--ri-h:210px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;margin-top:14px}
+.related-imgs .ri{display:block;flex:0 0 auto;height:var(--ri-h);width:calc(var(--ri-h) * var(--ri-ar,1.4));max-width:100%;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--secondary);cursor:zoom-in;transition:transform .18s ease,box-shadow .18s ease}
+.related-imgs .ri:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.09)}
+.related-imgs .ri img{display:block;width:100%;height:100%;object-fit:cover}
+@media(max-width:640px){.related-imgs{--ri-h:152px;gap:9px}}
+.ri-lightbox{width:min(92vw,1100px)}
+.ri-stage{max-height:78vh;display:flex;align-items:center;justify-content:center;background:var(--secondary);border-radius:var(--radius);overflow:hidden}
+.ri-stage img{max-width:100%;max-height:78vh;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;border-radius:var(--radius)}
+/* 后台相关图片编辑 */
+.ri-admin{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;margin-top:12px}
+.ri-admin .ri-item{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#fff}
+.ri-admin .ri-thumb{height:96px;width:100%;object-fit:cover;display:block;background:var(--secondary)}
+.ri-admin .ri-foot{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:6px 8px}
+.ri-admin .ri-foot .btn{padding:2px 6px;font-size:11px}
 .related{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:14px}
 @media(max-width:640px){.related{grid-template-columns:repeat(4,1fr)}}
 .designer-box{margin-top:24px;border:1px dashed var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -379,12 +394,24 @@ pre,.api-list,.log-line{overflow-wrap:anywhere}
 .login-wrap .input{font-size:15px;padding:11px 13px;min-height:44px}
 .login-wrap .btn{font-size:15px;padding:10px 16px}
 .login-wrap .small,.login-wrap .tiny{font-size:13px}
-.admin-shell table.app-table th:nth-child(1),.admin-shell table.app-table td:nth-child(1){width:64px}
-.admin-shell table.app-table th:nth-child(3),.admin-shell table.app-table td:nth-child(3){width:17%}
-.admin-shell table.app-table th:nth-child(4),.admin-shell table.app-table td:nth-child(4){width:15%}
-.admin-shell table.app-table th:nth-child(5),.admin-shell table.app-table td:nth-child(5){width:82px}
-.admin-shell table.app-table th:nth-child(6),.admin-shell table.app-table td:nth-child(6){width:124px}
-.admin-shell table.app-table th:nth-child(7),.admin-shell table.app-table td:nth-child(7){width:84px}
+/* 应用列表：名称列自适应剩余宽度并省略号截断；日期列给足宽度，不再与「编辑」重叠 */
+.admin-shell table.app-table{table-layout:fixed;min-width:860px}
+.admin-shell table.app-table th,.admin-shell table.app-table td{vertical-align:middle}
+.admin-shell table.app-table th:nth-child(1),.admin-shell table.app-table td:nth-child(1){width:58px}
+.admin-shell table.app-table th:nth-child(3),.admin-shell table.app-table td:nth-child(3){width:14%}
+.admin-shell table.app-table th:nth-child(4),.admin-shell table.app-table td:nth-child(4){width:16%}
+.admin-shell table.app-table th:nth-child(5),.admin-shell table.app-table td:nth-child(5){width:64px}
+.admin-shell table.app-table th:nth-child(6),.admin-shell table.app-table td:nth-child(6){width:152px}
+.admin-shell table.app-table th:nth-child(7),.admin-shell table.app-table td:nth-child(7){width:72px}
+.admin-shell table.app-table .app-name,.admin-shell table.app-table .app-slug,.admin-shell table.app-table .app-dev{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-shell table.app-table .cat-tags{display:flex;flex-wrap:wrap;gap:4px;max-width:100%;overflow:hidden}
+.admin-shell table.app-table .cat-tags .tag{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-shell table.app-table input[type=date]{width:100%;min-width:0;box-sizing:border-box}
+.pager{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pager .pager-info{color:var(--muted);font-size:13px;margin-right:auto}
+.pager select.input{width:auto;min-width:84px;padding:6px 9px;font-size:13px}
+.pager .btn.sm{min-width:34px}
+.pager .pg-on{background:var(--fg);color:#fff;border-color:var(--fg)}
 .admin-shell table.sugg-table th:nth-child(1),.admin-shell table.sugg-table td:nth-child(1){width:64px}
 .admin-shell table.sugg-table th:nth-child(3),.admin-shell table.sugg-table td:nth-child(3){width:15%}
 .admin-shell table.sugg-table th:nth-child(4),.admin-shell table.sugg-table td:nth-child(4){width:104px}
@@ -701,7 +728,7 @@ function freshDB(){
 }
 
 /* ---------- 站点包模式：图片是 icons/ thumbs/ 下的独立文件，元数据来自 manifest.json ---------- */
-function isSitePath(u){return /^(\.\/)?(icons|thumbs)\//.test(String(u||''))}
+function isSitePath(u){return /^(\.\/)?(icons|thumbs|related)\//.test(String(u||''))}
 function dbFromManifest(m){
   const b=freshDB();                       /* 分类/配色基础数据仍来自页面内嵌的 SITE */
   if(!m||!Array.isArray(m.apps)||!m.apps.length)return b;
@@ -933,7 +960,7 @@ function checkImages(){
     if(src.startsWith('data:')||src.startsWith('blob:'))return;      /* 已是占位图 / 内存图 */
     /* 站点包里的本地图标不会「挂起」，交给 onerror 兜底即可；
        大批量首屏渲染时若在这里判定 complete，会把正在加载的懒加载图误判成破图并永久换成占位图 */
-    if(isSitePath(src)||/\/(icons|thumbs)\//.test(src))return;
+    if(isSitePath(src)||/\/(icons|thumbs|related)\//.test(src))return;
     const r=img.getBoundingClientRect();
     if(!r.width||r.top>window.innerHeight+240||r.bottom<-240)return; /* 离屏懒加载图暂不判定 */
     if(img.complete&&img.naturalWidth>0){delete img.dataset.fbSince;return}
@@ -1184,6 +1211,27 @@ function viewHome(){
   $('#view').innerHTML=heroHTML()+filterNav(p)+`<div id="grid" class="wall-grid">${gridHTML(icons)}</div>`;
 }
 /* ---------- app detail ---------- */
+/* 相关图片（设计稿/过程图）：数据挂在 app.relatedImages = [{id,url,w,h}] */
+function relatedImagesOf(a){
+  const v=a?.app?.relatedImages;
+  return Array.isArray(v)?v.filter(x=>x&&x.url):[];
+}
+function relatedImagesSection(a){
+  const imgs=relatedImagesOf(a);if(!imgs.length)return '';
+  return `<h2>相关图片</h2><div class="related-imgs">${imgs.map(x=>{
+    const w=+x.w||0,h=+x.h||0;
+    const ar=(w>0&&h>0)?Math.min(3,Math.max(.45,w/h)):1.4;
+    return `<div class="ri" role="button" tabindex="0" title="点击查看原图" data-act="riview" data-slug="${esc(a.app.slug)}" data-id="${esc(x.id||'')}" style="--ri-ar:${ar.toFixed(4)}">${imgTag(x.url,'',a.app.name)}</div>`;
+  }).join('')}</div>`;
+}
+function openRelatedLightbox(url,name){
+  openModal(`<div class="lightbox ri-lightbox" role="dialog" aria-modal="true" aria-label="${esc(name)} 相关图片">
+    <button class="lb-close" data-act="closemodal" aria-label="关闭">×</button>
+    <div class="ri-stage">${imgTag(url,'',name,true)}</div>
+    <div class="lb-bar"><div class="lb-meta"><b>${esc(name)}</b><span>相关图片 · 点击空白处或按 Esc 关闭</span></div></div>
+  </div>`);
+  $('#overlay').classList.add('lb-overlay');
+}
 function viewApp(slug){
   const a=appBySlug(slug);if(!a){view404();return}
   const p=route().p,all=a.icons.filter(i=>!i.archivedAt);
@@ -1214,6 +1262,7 @@ function viewApp(slug){
     <div class="divider"></div>
     <h2>${bi('allVariants')}</h2>
     <div class="variant-row">${all.map(i=>`<a class="variant ${i.id===ic?.id?'active':''}" href="#/apps/${esc(slug)}?icon=${esc(i.id)}" title="${esc(i.variantName||'默认')}">${imgTag(i.url,'',a.app.name)}</a>`).join('')}</div>
+    ${relatedImagesSection(a)}
     <div class="meta-grid">
       <div class="meta-item"><div class="k">${esc(t('developer'))}</div><div class="v">${esc(a.app.developer?.name||'—')}</div></div>
       <div class="meta-item"><div class="k">${esc(t('designer'))}</div><div class="v">${esc(designer?.name||'—')}</div></div>
@@ -1459,7 +1508,8 @@ function view404(){
    Admin console — mirrors /admin, /admin/apps, /admin/apps/:slug,
    /admin/suggestions / /admin/about plus the App Store import pipeline.
    ======================================================================== */
-const ADMIN={importResults:[],importQuery:'',iconFile:null,newAppFile:null,suggTab:'open',appQuery:'',captchaQ:null,iconPreviewURL:null};
+const ADMIN={importResults:[],importQuery:'',iconFile:null,newAppFile:null,suggTab:'open',appQuery:'',appPage:1,appPageSize:10,captchaQ:null,iconPreviewURL:null};
+try{const _ps=+localStorage.getItem('iconmuseum_admin_pagesize');if([10,20,50].includes(_ps))ADMIN.appPageSize=_ps}catch(e){}
 const isAdmin=()=>sessionStorage.getItem('iconmuseum_admin')==='1';
 function adminShell(active,body){
   const links=[['/admin','数据总览','▦'],['/admin/apps','应用管理','▤'],['/admin/categories','分类管理','▧'],['/admin/styles','风格管理','◐'],['/admin/designers','设计师管理','☻'],['/admin/suggestions','设计师推荐','✎'],['/admin/about','关于页面','◈'],['/admin/security','安全防护','⛨'],['/admin/settings','系统设置','⚙']];
@@ -1743,7 +1793,18 @@ function exportSitePackage(){
       return o;
     });
     const def=icons.find(i=>i.type==='default'&&!i.archivedAt)||icons.find(i=>!i.archivedAt)||icons[0];
-    return Object.assign({},a,{icons,defaultIconUrl:def?def.url:(a.defaultIconUrl||'')});
+    const out=Object.assign({},a,{icons,defaultIconUrl:def?def.url:(a.defaultIconUrl||'')});
+    if((a.app.relatedImages||[]).length){
+      const rels=a.app.relatedImages.map(x=>{
+        const o=Object.assign({},x),b=dataUrlBytes(o.url);
+        if(!b)return o;
+        const ext=/^data:image\/png/i.test(o.url)?'png':(/^data:image\/jpe?g/i.test(o.url)?'jpg':'webp');
+        const path='related/'+zipName(a.app.slug)+'-'+zipName(o.id||uid())+'.'+ext;
+        put(path,b);o.url=path;return o;
+      });
+      out.app=Object.assign({},a.app,{relatedImages:rels});
+    }
+    return out;
   });
   const manifest={generatedAt:payload.generatedAt,apps:payload.apps,designers:payload.designers,
     categories:payload.categories,styles:payload.styles,about:payload.about,settings:payload.settings};
@@ -1760,7 +1821,7 @@ function exportSitePackage(){
 /* ---------- 生成可部署页面：把当前馆藏内嵌成默认数据 ---------- */
 function exportDeployHTML(){
   /* 站点包模式下图片是独立文件，直接内嵌 DB 会产出破图页面，引导改用站点包导出 */
-  if(DB.apps.some(a=>a.icons.some(i=>isSitePath(i.url)||isSitePath(i.hdUrl)))){
+  if(DB.apps.some(a=>a.icons.some(i=>isSitePath(i.url)||isSitePath(i.hdUrl))||relatedImagesOf(a).some(x=>isSitePath(x.url)))){
     toast('当前为站点包模式：图片是独立文件，请使用「导出站点包」或 build_gallery.py，单文件页面会丢失图片');return;
   }
   const root=document.documentElement.cloneNode(true);
@@ -1782,28 +1843,36 @@ function exportDeployHTML(){
 function viewAdminApps(){
   const q=ADMIN.appQuery.toLowerCase();
   const apps=DB.apps.filter(a=>!q||a.app.name.toLowerCase().includes(q)||a.app.slug.includes(q));
-  adminShell('/admin/apps',`<h1>应用管理</h1><div class="lead">共 ${DB.apps.length} 个应用 · ${DB.apps.reduce((n,a)=>n+a.icons.filter(i=>!i.archivedAt).length,0)} 个图标</div>
-    <div class="row spread" style="margin-bottom:14px"><input class="input" style="max-width:320px" id="app-q" placeholder="搜索应用…" value="${esc(ADMIN.appQuery)}"><button class="btn primary sm" data-act="newapp">＋ 新建应用</button></div>
-    <div class="panel" style="padding:0;overflow:auto"><table class="app-table"><thead><tr><th>图标</th><th>应用</th><th>开发者</th><th>分类</th><th>图标数</th><th>日期（可编辑）</th><th></th></tr></thead><tbody>
-    ${apps.slice(0,120).map(a=>`<tr><td>${imgTag(a.defaultIconUrl,'thumb',a.app.name)}</td>
-      <td><a href="#/admin/apps/${esc(a.app.slug)}" style="font-weight:600">${esc(a.app.name)}</a><div class="tiny muted">${esc(a.app.slug)}</div></td>
-      <td>${esc(a.app.developer?.name||'—')}</td><td><div class="row wrap" style="gap:4px">${(a.app.categories||[]).map(c=>`<span class="tag">${esc(catName(c))}</span>`).join('')}</div><button class="btn sm ghost" style="margin-top:6px" data-act="editcats" data-slug="${esc(a.app.slug)}">修改分类</button></td>
-      <td>${a.icons.length}</td><td><input class="input" type="date" style="width:140px;padding:4px 6px;font-size:12px" title="修改应用与主图标的日期" data-act="appdate" data-slug="${esc(a.app.slug)}" value="${esc(String(a.updatedAt||defaultIcon(a)?.date||'').slice(0,10))}"></td>
+  const size=ADMIN.appPageSize,pages=Math.max(1,Math.ceil(apps.length/size));
+  ADMIN.appPage=Math.min(Math.max(1,ADMIN.appPage),pages);
+  const page=ADMIN.appPage,from=(page-1)*size,shown=apps.slice(from,from+size);
+  const pageBtns=()=>{
+    const win=[];
+    for(let i=1;i<=pages;i++){
+      if(i===1||i===pages||Math.abs(i-page)<=1)win.push(i);
+      else if(win[win.length-1]!=='…')win.push('…');
+    }
+    return win.map(i=>i==='…'?'<span class="tiny muted">…</span>':
+      `<button class="btn sm ${i===page?'pg-on':''}" data-act="apppage" data-v="${i}">${i}</button>`).join('');
+  };
+  adminShell('/admin/apps',`<h1>应用管理</h1><div class="lead">共 ${DB.apps.length} 个应用 · ${DB.apps.reduce((n,a)=>n+a.icons.filter(i=>!i.archivedAt).length,0)} 个图标${q?` · 筛选出 ${apps.length} 个`:''}</div>
+    <div class="row spread" style="margin-bottom:14px;gap:10px;flex-wrap:wrap"><input class="input" style="max-width:320px" id="app-q" placeholder="搜索应用…" value="${esc(ADMIN.appQuery)}"><button class="btn primary sm" data-act="newapp">＋ 新建应用</button></div>
+    <div class="panel" style="padding:0;overflow:auto"><table class="app-table"><thead><tr><th>图标</th><th>应用</th><th>开发者</th><th>分类</th><th>图标数</th><th>日期</th><th></th></tr></thead><tbody>
+    ${shown.map(a=>`<tr><td>${imgTag(a.defaultIconUrl,'thumb',a.app.name)}</td>
+      <td><a class="app-name" href="#/admin/apps/${esc(a.app.slug)}" title="${esc(a.app.name)}" style="font-weight:600">${esc(a.app.name)}</a><div class="app-slug tiny muted" title="${esc(a.app.slug)}">${esc(a.app.slug)}</div></td>
+      <td><span class="app-dev" title="${esc(a.app.developer?.name||'—')}">${esc(a.app.developer?.name||'—')}</span></td>
+      <td><div class="cat-tags">${(a.app.categories||[]).map(c=>`<span class="tag">${esc(catName(c))}</span>`).join('')||'<span class="tiny muted">—</span>'}</div></td>
+      <td>${a.icons.length}</td><td><input class="input" type="date" title="修改应用与主图标的日期" data-act="appdate" data-slug="${esc(a.app.slug)}" value="${esc(String(a.updatedAt||defaultIcon(a)?.date||'').slice(0,10))}"></td>
       <td><a class="btn sm" href="#/admin/apps/${esc(a.app.slug)}">编辑</a></td></tr>`).join('')}
-    </tbody></table></div>${apps.length>120?`<p class="tiny muted">仅显示前 120 条（共 ${apps.length} 条），请用搜索框缩小范围。</p>`:''}`);
-  $('#app-q').addEventListener('input',e=>{ADMIN.appQuery=e.target.value;const pos=e.target.selectionStart;viewAdminApps();const n=$('#app-q');n.focus();n.setSelectionRange(pos,pos)});
-}
-function editCategoryModal(slug){
-  const a=appBySlug(slug);if(!a)return;
-  const selected=(a.app.categories||[]).map(c=>c.slug);
-  openModal(`<div class="modal"><h3>修改所属分类</h3><p class="small muted">${esc(a.app.name)} · 可多选，保存后立即影响前台筛选。</p>
-    <div class="chip-list" id="cat-pick" style="margin:14px 0">${categoryCheckboxes(selected)}</div>
-    <label class="field"><span>搜索分类</span><input class="input" id="cat-search" placeholder="输入分类名称"></label>
-    <div class="foot"><button class="btn" data-act="closemodal">${esc(t('cancel'))}</button><button class="btn primary" data-act="savecats" data-slug="${esc(slug)}">保存分类</button></div></div>`);
-  $('#cat-search').addEventListener('input',e=>{
-    const q=e.target.value.trim().toLowerCase();
-    $$('#cat-pick .chip').forEach(ch=>{ch.style.display=ch.innerText.toLowerCase().includes(q)?'':'none'});
-  });
+    </tbody></table></div>
+    <div class="pager"><label class="row" style="gap:6px;align-items:center;white-space:nowrap"><span class="tiny muted">每页</span>
+      <select class="input" id="app-size"><option value="10" ${size===10?'selected':''}>10</option><option value="20" ${size===20?'selected':''}>20</option><option value="50" ${size===50?'selected':''}>50</option></select><span class="tiny muted">条</span></label>
+      <span class="pager-info">共 ${apps.length} 条 · 第 ${page} / ${pages} 页${apps.length?`（显示 ${from+1}–${Math.min(from+size,apps.length)}）`:''}</span>
+      <button class="btn sm" data-act="apppage" data-v="prev" ${page<=1?'disabled':''}>上一页</button>
+      ${pageBtns()}
+      <button class="btn sm" data-act="apppage" data-v="next" ${page>=pages?'disabled':''}>下一页</button>
+    </div>`);
+  $('#app-q').addEventListener('input',e=>{ADMIN.appQuery=e.target.value;ADMIN.appPage=1;const pos=e.target.selectionStart;viewAdminApps();const n=$('#app-q');n.focus();n.setSelectionRange(pos,pos)});
 }
 function newAppModal(){
   openModal(`<div class="modal"><h3>新建应用</h3><p class="small muted">创建应用记录，并附一张默认图标。</p>
@@ -1848,14 +1917,93 @@ function viewAdminAppEdit(slug){
         <label class="field"><span>个人网站</span><input class="input" id="ed-web" placeholder="例如 behance.net/name（可省略 https://）" value="${esc(a.app.website||'')}"></label>
         <label class="field"><span>收录日期 <span class="hint">同时更新主图标日期，前台详情页会同步显示</span></span><input class="input" type="date" id="ed-date" value="${esc(String(a.updatedAt||defaultIcon(a)?.date||'').slice(0,10))}"></label>
         <label class="field"><span>所属分类 <span class="hint">可多选，保存后前台筛选同步生效</span></span></label><div class="chip-list" id="ed-cats">${categoryCheckboxes((a.app.categories||[]).map(c=>c.slug))}</div>
-        <div class="tiny muted" style="margin-top:6px">当前已选 ${(a.app.categories||[]).length} 项 · 也可在应用列表中点击「修改分类」快速调整</div>
+        <div class="tiny muted" style="margin-top:6px">当前已选 ${(a.app.categories||[]).length} 项 · 分类仅在应用详情页修改</div>
         <button class="btn primary sm" style="margin-top:14px" data-act="saveapp" data-slug="${esc(slug)}">保存修改</button>
       </div>
       <div class="panel"><h2>图标 <span class="tiny muted">${a.icons.filter(i=>!i.archivedAt).length} 个已启用</span></h2>
         <div style="max-height:520px;overflow:auto;padding-right:4px">${a.icons.map(i=>iconEditHTML(a,i)).join('')}</div>
         <button class="btn sm" style="margin-top:10px" data-act="addicon" data-slug="${esc(slug)}">＋ 添加图标</button>
       </div>
+    </div>
+    <div class="panel" style="margin-top:20px"><h2>相关图片 <span class="tiny muted">前台详情页「全部变体」下方展示 · 无图时整块不显示</span></h2>
+      <p class="small muted" style="margin-top:2px">展示设计师发布在网上的设计稿、过程图。支持任意宽高比：固定高度、按原图比例定宽、自动换行。上传图最长边压到 1000px，在线发布后会自动存为独立图片文件。</p>
+      <div class="row wrap" style="gap:8px;margin-top:12px;align-items:center">
+        <input class="input" type="file" id="ri-file" accept="image/*" multiple style="max-width:250px">
+        <input class="input" id="ri-url" placeholder="或填图片地址（https://… 或 related/…）" style="max-width:280px">
+        <button class="btn primary sm" data-act="riadd" data-slug="${esc(slug)}">＋ 添加</button>
+      </div>
+      <div class="ri-admin" id="ri-list">${relatedImagesAdminHTML(a,slug)}</div>
     </div>`);
+}
+function relatedImagesAdminHTML(a,slug){
+  const imgs=relatedImagesOf(a);
+  if(!imgs.length)return '<div class="small muted" style="grid-column:1/-1;padding:10px 0">还没有相关图片，添加后前台详情页会自动出现「相关图片」模块。</div>';
+  return imgs.map((x,i)=>`<div class="ri-item">
+    <img class="ri-thumb" src="${esc(asset(x.url))}" data-fb="${esc(placeholderFor(a.app.name))}" alt="相关图片 ${i+1}" onerror="imgFallback(this)" referrerpolicy="no-referrer">
+    <div class="ri-foot"><span class="tiny muted">${x.w&&x.h?`${x.w}×${x.h}`:'图片'}</span>
+      <span class="row" style="gap:3px">
+        <button class="btn sm" data-act="rimove" data-slug="${esc(slug)}" data-id="${esc(x.id||'')}" data-v="-1" title="前移" ${i===0?'disabled':''}>←</button>
+        <button class="btn sm" data-act="rimove" data-slug="${esc(slug)}" data-id="${esc(x.id||'')}" data-v="1" title="后移" ${i===imgs.length-1?'disabled':''}>→</button>
+        <button class="btn sm" data-act="riremove" data-slug="${esc(slug)}" data-id="${esc(x.id||'')}" title="删除">×</button>
+      </span></div>
+  </div>`).join('');
+}
+/* 相关图片上传：保留原始宽高比，只按最长边等比压缩 */
+async function readRelatedImage(file){
+  return new Promise((resolve,reject)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        const W=im.naturalWidth||1,H=im.naturalHeight||1,tr=Math.min(1,1000/Math.max(W,H));
+        const c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(W*tr));c.height=Math.max(1,Math.round(H*tr));
+        const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+        x.drawImage(im,0,0,c.width,c.height);
+        let url;try{url=c.toDataURL('image/webp',.82)}catch(e){}
+        if(!url||!url.startsWith('data:image/webp'))url=c.toDataURL('image/png');
+        resolve({url,w:W,h:H});
+      };
+      im.onerror=reject;im.src=fr.result;
+    };
+    fr.onerror=reject;fr.readAsDataURL(file);
+  });
+}
+async function addRelatedImages(slug){
+  const a=appBySlug(slug);if(!a)return;
+  const list=relatedImagesOf(a);
+  const files=Array.from($('#ri-file')?.files||[]),raw=($('#ri-url')?.value||'').trim();
+  if(!files.length&&!raw){toast('请选择图片文件或填写图片地址');return}
+  let n=0;
+  for(const f of files){
+    try{const r=await readRelatedImage(f);list.push({id:uid(),url:r.url,w:r.w,h:r.h});n++}catch(e){}
+  }
+  if(raw){
+    if(isSitePath(raw)){list.push({id:uid(),url:raw,w:0,h:0});n++}
+    else{
+      const u=cleanUrl(raw);
+      if(u){
+        let w=0,h=0;
+        try{const im=await new Promise((res,rej)=>{const x=new Image();x.onload=()=>res(x);x.onerror=rej;x.src=u});w=im.naturalWidth||0;h=im.naturalHeight||0}catch(e){}
+        list.push({id:uid(),url:u,w,h});n++;
+      }
+    }
+  }
+  if(!n){toast('没有可用的图片');return}
+  a.app.relatedImages=list;a.updatedAt=nowISO();
+  log('为 '+a.app.name+' 添加 '+n+' 张相关图片');save();toast('已添加 '+n+' 张相关图片');viewAdminAppEdit(slug);
+}
+function removeRelatedImage(slug,id){
+  const a=appBySlug(slug);if(!a)return;
+  a.app.relatedImages=relatedImagesOf(a).filter(x=>x.id!==id);a.updatedAt=nowISO();
+  log('删除 '+a.app.name+' 的一张相关图片');save();toast('已删除');viewAdminAppEdit(slug);
+}
+function moveRelatedImage(slug,id,dir){
+  const a=appBySlug(slug);if(!a)return;
+  const list=relatedImagesOf(a),i=list.findIndex(x=>x.id===id),j=i+dir;
+  if(i<0||j<0||j>=list.length)return;
+  [list[i],list[j]]=[list[j],list[i]];
+  a.app.relatedImages=list;a.updatedAt=nowISO();save();viewAdminAppEdit(slug);
 }
 function iconEditHTML(a,i){
   const dsel=DB.designers.map(d=>`<option value="${esc(d.slug)}" ${i.designer?.slug===d.slug?'selected':''}>${esc(d.name)}</option>`).join('');
@@ -2312,13 +2460,6 @@ document.addEventListener('click',e=>{
       break}
     case 'logout':sessionStorage.removeItem('iconmuseum_admin');sessionStorage.removeItem('iconmuseum_admin_at');go('/');break;
     case 'copyadminurl':copy($('#li-url').value);break;
-    case 'editcats':editCategoryModal(el.dataset.slug);break;
-    case 'savecats':{
-      const a=appBySlug(el.dataset.slug);if(!a)break;
-      const picked=$$('#cat-pick input:checked').map(i=>ensureCategories().find(c=>c.slug===i.value)).filter(Boolean)
-        .map(c=>({id:c.id,slug:c.slug,name:c.zh||catName(c),icon:c.icon}));
-      a.app.categories=picked;a.updatedAt=nowISO();
-      log('修改 '+a.app.name+' 的所属分类（'+picked.length+' 项）');save();closeModal();toast('分类已更新');viewAdminApps();break}
     case 'savesecurity':{
       const o={};$$('[data-sec]').forEach(x=>o[x.dataset.sec]=x.checked);
       DB.security=o;log('更新反逆向防护策略');save();toast('策略已保存，检测类项目刷新后完全生效');render();break}
@@ -2332,6 +2473,14 @@ document.addEventListener('click',e=>{
     case 'newapp':newAppModal();break;
     case 'savenewapp':saveNewApp();break;
     case 'saveapp':saveAppDetails(el.dataset.slug);break;
+    case 'riadd':addRelatedImages(el.dataset.slug);break;
+    case 'riremove':removeRelatedImage(el.dataset.slug,el.dataset.id);break;
+    case 'rimove':moveRelatedImage(el.dataset.slug,el.dataset.id,+el.dataset.v);break;
+    case 'riview':{const ap=appBySlug(el.dataset.slug),im=relatedImagesOf(ap).find(x=>x.id===el.dataset.id);
+      if(im)openRelatedLightbox(im.url,ap.app.name);break}
+    case 'apppage':{const v=el.dataset.v;
+      if(v==='prev')ADMIN.appPage--;else if(v==='next')ADMIN.appPage++;else ADMIN.appPage=+v||1;
+      viewAdminApps();window.scrollTo({top:0,behavior:'smooth'});break}
     case 'addicon':addIconModal(el.dataset.slug);break;
     case 'saveaddicon':saveAddIcon(el.dataset.slug);break;
     case 'updateicon':updateIconFile(el.dataset.slug,el.dataset.icon);break;
@@ -2520,6 +2669,11 @@ document.addEventListener('change',e=>{
   else if(el.matches('[data-act="iconstyle"]'))setIconStyle(el.dataset.slug,el.dataset.icon,el.value);
   else if(el.matches('[data-act="icondate"]'))setIconDate(el.dataset.slug,el.dataset.icon,el.value);
   else if(el.matches('[data-act="appdate"]'))setAppDate(el.dataset.slug,el.value);
+  else if(el.id==='app-size'){
+    ADMIN.appPageSize=+el.value||10;ADMIN.appPage=1;
+    try{localStorage.setItem('iconmuseum_admin_pagesize',String(ADMIN.appPageSize))}catch(e){}
+    viewAdminApps();
+  }
 });
 document.addEventListener('keydown',e=>{
   const sec=DB.security||{};

@@ -231,6 +231,20 @@ function extractImages(p) {
         ic[field] = path;
       }
     }
+    /* 详情页「相关图片」：同样拆成独立文件，避免 dataURL 撑爆 manifest.json */
+    const rels = a.app && Array.isArray(a.app.relatedImages) ? a.app.relatedImages : [];
+    for (const ri of rels) {
+      const v = ri && ri.url;
+      if (typeof v !== 'string' || !v.startsWith('data:')) continue;
+      const d = parseDataURL(v);
+      if (!d) continue;
+      const rid = String(ri.id || '').replace(/[^a-z0-9-]/gi, '').slice(-24) || 'img';
+      const name = slug + '-' + rid + '.' + d.ext;
+      if (!SAFE_NAME.test(name)) throw new Error('相关图片文件名不合法：' + name);
+      const path = 'related/' + name;
+      if (!seen.has(path)) { files.push({ path, base64: d.b64 }); seen.add(path); }
+      ri.url = path;
+    }
   }
   return files;
 }
