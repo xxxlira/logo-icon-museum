@@ -6,7 +6,10 @@
  *   - 管理员登录 → HttpOnly 签名 Cookie（HMAC-SHA256，密钥由 ADMIN_PASSWORD 派生）
  *   - 保存     → 把整份馆藏拆成 manifest.json / index.html 内嵌快照 / 图标文件
  *               → 用 GitHub Git Data API 一次原子提交到 main
- *               → Cloudflare Pages 自动重建（1-2 分钟），作为静态基线
+ *               → 纯文字改动在提交信息加 [CI Skip] 跳过 Pages 构建；
+ *                 含新图片时才触发一次构建，把文件铺到 CDN（1-2 分钟）
+ *   - 暂存发布 → 前端后台改动只写本机草稿，点「发布到线上」才调用一次保存，
+ *               避免每改一处就消耗一次构建额度
  *   - 即时生效 → 前端改从 /api/cms?action=manifest 读 GitHub 上的最新清单，
  *               边缘缓存 15 秒且保存时主动清除，访客刷新即可看到，无需等重建
  *
@@ -332,11 +335,16 @@ async function handlePost(ctx) {
       { path: 'manifest.json', base64: utf8ToB64(JSON.stringify(buildManifest(p))) },
       { path: 'index.html', base64: utf8ToB64(await buildIndexHTML(p, env)) },
     ]);
-    const sha = await atomicCommit(items, env,
-      '站内编辑：' + p.apps.length + ' 个应用 · ' + new Date().toISOString());
+    /* 纯文字改动不需要重建静态资源：用 Cloudflare 官方的 [CI Skip] 提交信息前缀
+       跳过 Pages 构建；内容本身通过 /api/cms?action=manifest 即时生效。
+       只有本次含新图片时才正常构建，把文件铺到 CDN。 */
+    const skippedBuild = images.length === 0;
+    const message = (skippedBuild ? '[CI Skip] ' : '')
+      + '站内编辑：' + p.apps.length + ' 个应用 · ' + new Date().toISOString();
+    const sha = await atomicCommit(items, env, message);
     const c = cacheObj();
     if (c) { try { await c.delete(cacheKey(url)); } catch (e) { /* ignore */ } }
-    return json({ ok: true, sha, files: items.length, generatedAt: p.generatedAt });
+    return json({ ok: true, sha, files: items.length, generatedAt: p.generatedAt, skippedBuild });
   }
   return json({ error: '未知操作' }, 400);
 }

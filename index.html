@@ -414,6 +414,8 @@ pre,.api-list,.log-line{overflow-wrap:anywhere}
   .detail-main{width:120px;height:120px}
   .meta-grid{grid-template-columns:1fr}
 }
+.draft-banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 20px;padding:12px 16px;border:1px solid #f0cf85;border-radius:10px;background:#fff9e8;color:#6b4a05;font-size:13px;line-height:1.65}
+.draft-banner .btn{flex-shrink:0}
 </style>
 </head>
 <body class="lang-zh">
@@ -696,6 +698,12 @@ async function loadSiteManifest(force){
     }
     if(!m||!Array.isArray(m.apps)||!m.apps.length)return;
     let local=null;try{local=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+    /* 有未发布草稿时绝不覆盖本机数据（包括他人刚发布的新版本），只标记冲突供发布时提示 */
+    if(!force&&draftInfo()){
+      const lm=Date.parse(m.generatedAt||'')||0,ld=local?(Date.parse(local.generatedAt||'')||0):0;
+      if(local&&lm>ld)CLOUD.remoteNewer=true;
+      return;
+    }
     /* 管理员的本地修改优先；但站点包重新生成（generatedAt 更新）后，访客应看到新馆藏 */
     const mt=Date.parse(m.generatedAt||'')||0,lt=local?(Date.parse(local.generatedAt||'')||0):0;
     if(!force&&local&&(!mt||lt>=mt))return;
@@ -720,7 +728,7 @@ const LOCAL_QUOTA=5*1024*1024; /* 实测 Chrome/Safari 本地存储上限约 5 M
  * 站点部署了 Pages Functions（/api/cms）并配置好环境变量时自动启用：
  * 登录后后台改动会同步写回 GitHub，访客刷新即可看到，无需等待 Pages 重建。
  * 没有后端时 CLOUD.available 恒为 false，全部行为与原来的纯静态只读站点一致。 */
-const CLOUD={available:false,authed:false,saving:false,dirty:false,timer:null,error:''};
+const CLOUD={available:false,authed:false,publishing:false,error:'',remoteNewer:false};
 function cmsURL(action){return 'api/cms?action='+action}
 async function cmsGet(action){
   const r=await fetch(cmsURL(action),{cache:'no-store',credentials:'same-origin'});
@@ -741,15 +749,51 @@ function publicDB(){
   ['activity','suggestions','security','subscribers','colors'].forEach(k=>delete p[k]);
   return p;
 }
-function scheduleCloudSave(){
-  if(!CLOUD.available||!CLOUD.authed)return;
-  CLOUD.dirty=true;clearTimeout(CLOUD.timer);
-  CLOUD.timer=setTimeout(cloudSaveNow,900);
+/* ---------- 暂存草稿 + 一键发布 ----------
+ * 后台改动只写本机 localStorage 并打草稿标记，不会自动提交到 GitHub；
+ * 点「发布到线上」才 POST 一次，这样改十几次也只产生一次 Pages 构建。 */
+const DRAFT_KEY='iconmuseum_draft_v1';
+function draftInfo(){
+  if(!CLOUD.available||!CLOUD.authed)return null;
+  try{const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');return d&&d.at?d:null}catch(e){return null}
 }
-async function cloudSaveNow(){
-  if(!CLOUD.available||!CLOUD.authed||CLOUD.saving)return;
-  CLOUD.saving=true;CLOUD.dirty=false;
-  toast('正在同步到线上…',1600);
+function draftSideHTML(d){
+  const warn=CLOUD.remoteNewer?'<br><span style="color:#a05a00">● 线上已有新版本，发布将覆盖</span>':'';
+  return `● 在线 CMS 已连接<br>${d
+    ? `有 <b>${d.edits}</b> 处未发布更改<br>访客仍看到上次发布版本`
+    : '已与线上同步<br>改动先暂存本机'}${warn}
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+      <button class="btn sm ${d?'primary':''}" data-act="cmspublish" ${d?'':'disabled'}>发布到线上</button>
+      ${d?'<button class="btn sm" data-act="cmsdiscard">放弃更改</button>':''}
+    </div>`;
+}
+function draftBannerHTML(d){
+  if(!d)return '';
+  return `<div id="draft-banner" class="draft-banner"><span>● 有 <b>${d.edits}</b> 处未发布更改 · 仅本机可见，访客仍看到上次发布的版本${CLOUD.remoteNewer?'；线上已有新版本，发布将覆盖':''}</span>
+    <span style="flex:1"></span><button class="btn sm primary" data-act="cmspublish">发布到线上</button>
+    <button class="btn sm" data-act="cmsdiscard">放弃更改</button></div>`;
+}
+function updateDraftUI(){
+  const d=draftInfo();
+  const box=$('#draft-box');if(box)box.innerHTML=draftSideHTML(d);
+  const old=$('#draft-banner'),main=$('.admin-main');
+  if(d){
+    if(old)old.outerHTML=draftBannerHTML(d);
+    else if(main)main.insertAdjacentHTML('afterbegin',draftBannerHTML(d));
+  }else if(old)old.remove();
+}
+function markDraft(){
+  if(!CLOUD.available||!CLOUD.authed)return;
+  const d=draftInfo()||{at:nowISO(),edits:0};
+  d.edits++;d.at=nowISO();
+  try{localStorage.setItem(DRAFT_KEY,JSON.stringify(d))}catch(e){}
+  updateDraftUI();
+}
+function clearDraft(){try{localStorage.removeItem(DRAFT_KEY)}catch(e){}CLOUD.remoteNewer=false;updateDraftUI()}
+async function publishNow(){
+  if(!CLOUD.available||!CLOUD.authed||CLOUD.publishing)return;
+  CLOUD.publishing=true;
+  toast('正在发布到线上…',1600);
   try{
     const r=await fetch('api/cms',{method:'POST',credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
@@ -757,22 +801,20 @@ async function cloudSaveNow(){
     const j=await r.json();
     if(!r.ok||!j.ok)throw new Error(j.error||('HTTP '+r.status));
     DB.generatedAt=j.generatedAt;CLOUD.error='';
-    toast('已保存到线上，访客刷新即可看到',3200);
+    clearDraft();
+    toast(j.skippedBuild?'已发布，访客刷新即可看到（本次未触发构建）':'已发布，新图约 1–2 分钟后显示',3600);
     /* 把本地的 dataURL 图片换成后端拆分出的站内相对路径 */
     await loadSiteManifest(true);
   }catch(e){
     CLOUD.error=String(e.message||e);
-    toast('线上保存失败：'+CLOUD.error+'（改动仍保留在本机）',6500);
-  }finally{
-    CLOUD.saving=false;
-    if(CLOUD.dirty)scheduleCloudSave();
-  }
+    toast('发布失败：'+CLOUD.error+'（草稿仍保留在本机）',6500);
+  }finally{CLOUD.publishing=false}
 }
 function viewCloudLogin(){
   const url=location.href.split('#')[0]+'#/admin';
   $('#view').innerHTML=`<div class="card" style="max-width:420px;margin:64px auto;padding:28px">
     <h1 style="margin:0 0 4px;font-size:22px">在线管理</h1>
-    <p class="small muted" style="margin:0 0 20px">登录后可在线编辑馆藏，保存后即时对所有访客生效。</p>
+    <p class="small muted" style="margin:0 0 20px">登录后可在线编辑馆藏；改动先暂存本机，点「发布到线上」后才对所有访客生效。</p>
     ${CLOUD.error?`<div class="alert" style="margin-bottom:14px">${esc(CLOUD.error)}</div>`:''}
     <label class="field"><span>管理员密码</span><input class="input" id="cms-pass" type="password" autocomplete="current-password" placeholder="在 Cloudflare 环境变量中设置"></label>
     <button class="btn primary" style="width:100%;margin-top:16px" data-act="cmslogin">登录</button>
@@ -784,8 +826,8 @@ function viewCloudLogin(){
 }
 function save(iconFallback){
   const str=()=>JSON.stringify(DB);
-  const done=()=>{scheduleCloudSave();return true};
-  const cloudOnly=()=>{  /* 在线 CMS 模式下 localStorage 只是缓存，写满不阻断云端保存 */
+  const done=()=>{markDraft();return true};
+  const cloudOnly=()=>{  /* 在线 CMS 模式下 localStorage 只是暂存区，写满不阻断发布 */
     if(CLOUD.available&&CLOUD.authed){done();return true}
     return false;
   };
@@ -813,7 +855,11 @@ function storageStats(){
   return {used,quota:LOCAL_QUOTA,free,total,hd,avgHd:hd?Math.round(hdBytes/hd):0,
     perIcon,canAdd:Math.floor(free/perIcon),pct:Math.min(100,Math.round(used/LOCAL_QUOTA*100))};
 }
-function log(text){DB.activity.unshift({at:nowISO(),text});DB.activity=DB.activity.slice(0,80);save()}
+function log(text){
+  DB.activity.unshift({at:nowISO(),text});DB.activity=DB.activity.slice(0,80);
+  /* 活动日志是后台私有数据、不进公开清单，也不应被算作「未发布更改」 */
+  try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}
+}
 
 /* ---------- asset + helpers ---------- */
 const PLACEHOLDER='data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#f1f1f0"/></svg>');
@@ -1379,9 +1425,9 @@ function adminShell(active,body){
       <div class="grp" style="margin-top:18px">前台页面</div><a href="#/">↗ 浏览图标库</a><a href="#/wall">↗ 图标墙</a>
       <div class="grp" style="margin-top:18px">会话</div>
       ${CLOUD.available&&CLOUD.authed
-        ? '<div class="tiny muted" style="padding:2px 10px 8px;line-height:1.7">● 在线 CMS 已连接<br>保存后自动同步到线上<br><button class="btn sm" data-act="cmssync" style="margin-top:8px">立即同步</button></div><a href="#" data-act="cmslogout">⇥ 退出登录</a>'
+        ? `<div id="draft-box" class="tiny muted" style="padding:2px 10px 8px;line-height:1.7">${draftSideHTML(draftInfo())}</div><a href="#" data-act="cmslogout">⇥ 退出登录</a>`
         : '<a href="#" data-act="logout">⇥ 退出登录</a>'}
-    </aside><main class="admin-main">${body}</main></div>`;
+    </aside><main class="admin-main">${draftBannerHTML(draftInfo())}${body}</main></div>`;
 }
 function viewLogin(){
   const hint=adminPass()===DEFAULT_PASS?'<b>museum2026</b>':'<b>已自定义</b>';
@@ -2300,11 +2346,25 @@ document.addEventListener('click',e=>{
         });
       break}
     case 'cmslogout':{
+      const d=draftInfo();
+      if(d&&!confirm('有 '+d.edits+' 处未发布更改，退出将丢弃这些更改。确定退出吗？'))break;
       fetch('api/cms',{method:'POST',credentials:'same-origin',
         headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout'})})
-        .catch(()=>{}).finally(()=>{CLOUD.authed=false;location.hash='#/';render()});
+        .catch(()=>{}).finally(async()=>{
+          CLOUD.authed=false;clearDraft();
+          try{localStorage.removeItem(KEY)}catch(e){}
+          location.hash='#/';
+          await loadSiteManifest(true);render();
+        });
       break}
-    case 'cmssync':{cloudSaveNow();break}
+    case 'cmspublish':{publishNow();break}
+    case 'cmsdiscard':{
+      const d=draftInfo();if(!d)break;
+      if(!confirm('放弃这 '+d.edits+' 处未发布更改，恢复到线上版本吗？'))break;
+      clearDraft();
+      loadSiteManifest(true).then(()=>{render();toast('已放弃草稿，恢复到线上版本')});
+      break}
+    case 'cmssync':{publishNow();break}
   }
 });
 document.addEventListener('change',e=>{
